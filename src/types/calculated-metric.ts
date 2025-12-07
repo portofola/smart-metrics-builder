@@ -1,6 +1,6 @@
 export type OperatorType = 'add' | 'subtract' | 'multiply';
 
-export type OperandType = 'metric' | 'constant';
+export type OperandType = 'metric' | 'constant' | 'custom-conversion' | 'utm' | 'custom-import' | 'custom-kpi';
 
 export interface Operand {
   id: string;
@@ -14,7 +14,7 @@ export interface Operand {
 export interface Metric {
   id: string;
   name: string;
-  source: string;
+  source?: string;
   category?: string;
 }
 
@@ -24,6 +24,48 @@ export interface Constant {
   value: number;
   unit?: string;
   timeSeries?: boolean;
+  location?: string;
+  periods?: number;
+}
+
+export interface CustomConversionConfig {
+  id: string;
+  name: string;
+  goals: ConversionGoal[];
+}
+
+export interface ConversionGoal {
+  id: string;
+  goalName: string;
+  metric: string;
+  type: 'simple' | 'event-name';
+  eventName?: string;
+}
+
+export interface UTMConfig {
+  id: string;
+  name: string;
+  ga4Property: string;
+  utmParameters: UTMParameter[];
+  metric: string;
+}
+
+export interface UTMParameter {
+  id: string;
+  dimension: string;
+  value: string;
+}
+
+export interface CustomImportConfig {
+  id: string;
+  title: string;
+  metric: string;
+}
+
+export interface CustomKPIConfig {
+  id: string;
+  title: string;
+  metric: string;
 }
 
 export interface CalculatedMetricConfig {
@@ -48,3 +90,5 @@ export type MappingType =
   | 'custom-metric'
   | 'calculated-metric'
   | 'ignore-mapping';
+
+export type OperandTabType = 'metric' | 'custom-conversions' | 'utm' | 'custom-import' | 'custom-kpi' | 'constants';

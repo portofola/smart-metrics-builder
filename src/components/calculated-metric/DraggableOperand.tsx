@@ -31,6 +31,15 @@ const operatorLabels = {
   multiply: 'Multiply',
 };
 
+const typeLabels: Record<string, string> = {
+  metric: 'Metric',
+  constant: 'Constant',
+  'custom-conversion': 'Conversion',
+  utm: 'UTM',
+  'custom-import': 'Import',
+  'custom-kpi': 'KPI',
+};
+
 export function DraggableOperand({
   operand,
   index,
@@ -73,6 +82,7 @@ export function DraggableOperand({
         {/* Drag handle */}
         <button
           className="flex h-8 w-8 cursor-grab items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:cursor-grabbing"
+          title="Drag to reorder"
           {...attributes}
           {...listeners}
         >
@@ -120,9 +130,9 @@ export function DraggableOperand({
         <div
           className={cn(
             "flex flex-1 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium",
-            operand.type === 'metric'
-              ? "bg-accent text-accent-foreground"
-              : "bg-constant/10 text-constant"
+            operand.type === 'constant'
+              ? "bg-constant/10 text-constant"
+              : "bg-accent text-accent-foreground"
           )}
         >
           {operand.type === 'constant' && (
@@ -131,11 +141,9 @@ export function DraggableOperand({
             </span>
           )}
           <span className="truncate">{operand.label}</span>
-          {operand.source && (
-            <span className="ml-auto text-xs text-muted-foreground">
-              {operand.source}
-            </span>
-          )}
+          <span className="ml-auto text-xs text-muted-foreground">
+            {typeLabels[operand.type] || operand.type}
+          </span>
         </div>
 
         {/* Remove button */}

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -18,6 +19,11 @@ import { Operand, OperatorType, Metric, Constant } from '@/types/calculated-metr
 import { DraggableOperand } from './DraggableOperand';
 import { OperandSelector } from './OperandSelector';
 import { FormulaPreview } from './FormulaPreview';
+import { CustomConversionModal } from './modals/CustomConversionModal';
+import { UTMConfigModal } from './modals/UTMConfigModal';
+import { CustomImportModal } from './modals/CustomImportModal';
+import { CustomKPIModal } from './modals/CustomKPIModal';
+import { ManageConstantsModal } from './modals/ManageConstantsModal';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -50,11 +56,17 @@ export function CalculationBuilder({
   onRemoveOperand,
   onReorderOperands,
 }: CalculationBuilderProps) {
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [conversionModalOpen, setConversionModalOpen] = useState(false);
+  const [utmModalOpen, setUtmModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [kpiModalOpen, setKpiModalOpen] = useState(false);
+  const [constantsModalOpen, setConstantsModalOpen] = useState(false);
+  const [localConstants, setLocalConstants] = useState(availableConstants);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
+      activationConstraint: { distance: 8 },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -72,7 +84,6 @@ export function CalculationBuilder({
     onAddOperand({
       type: 'metric',
       label: metric.name,
-      source: metric.source,
       operator: operands.length > 0 ? 'add' : undefined,
     });
   };
@@ -86,98 +97,207 @@ export function CalculationBuilder({
     });
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Metric Name Input */}
-      <div className="space-y-2">
-        <Label htmlFor="metric-name" className="nexoya-label">
-          Calculated metric name
-        </Label>
-        <Input
-          id="metric-name"
-          placeholder="e.g., Net Revenue, Qualified Leads, Adjusted Conversions"
-          value={metricName}
-          onChange={(e) => onMetricNameChange(e.target.value)}
-          className="text-sm"
-        />
-      </div>
+  const handleSelectCustomConversion = (config: { id: string; name: string }) => {
+    onAddOperand({
+      type: 'custom-conversion',
+      label: config.name,
+      operator: operands.length > 0 ? 'add' : undefined,
+    });
+  };
 
-      {/* Build Your Calculation Section */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="nexoya-section-title">Build your calculation</h3>
-            <p className="nexoya-description mt-1">
-              Add metrics and constants, then arrange them using drag and drop.
-            </p>
-          </div>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5">
-                <Plus className="h-4 w-4" />
-                Add operand
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-4" align="end">
-              <OperandSelector
-                metrics={availableMetrics}
-                constants={availableConstants}
-                onSelectMetric={handleSelectMetric}
-                onSelectConstant={handleSelectConstant}
-              />
-            </PopoverContent>
-          </Popover>
+  const handleSelectUTM = (config: { id: string; name: string }) => {
+    onAddOperand({
+      type: 'utm',
+      label: config.name,
+      operator: operands.length > 0 ? 'add' : undefined,
+    });
+  };
+
+  const handleSelectCustomImport = (config: { id: string; title: string }) => {
+    onAddOperand({
+      type: 'custom-import',
+      label: config.title,
+      operator: operands.length > 0 ? 'add' : undefined,
+    });
+  };
+
+  const handleSelectCustomKPI = (config: { id: string; title: string }) => {
+    onAddOperand({
+      type: 'custom-kpi',
+      label: config.title,
+      operator: operands.length > 0 ? 'add' : undefined,
+    });
+  };
+
+  const handleSaveCustomConversion = (config: { name: string; goals: any[] }) => {
+    onAddOperand({
+      type: 'custom-conversion',
+      label: config.name,
+      operator: operands.length > 0 ? 'add' : undefined,
+    });
+  };
+
+  const handleSaveUTM = (config: { name: string }) => {
+    onAddOperand({
+      type: 'utm',
+      label: config.name,
+      operator: operands.length > 0 ? 'add' : undefined,
+    });
+  };
+
+  const handleSaveCustomImport = (config: { title: string }) => {
+    onAddOperand({
+      type: 'custom-import',
+      label: config.title,
+      operator: operands.length > 0 ? 'add' : undefined,
+    });
+  };
+
+  const handleSaveCustomKPI = (config: { title: string }) => {
+    onAddOperand({
+      type: 'custom-kpi',
+      label: config.title,
+      operator: operands.length > 0 ? 'add' : undefined,
+    });
+  };
+
+  const handleAddConstant = (constant: Constant) => {
+    setLocalConstants([...localConstants, constant]);
+  };
+
+  return (
+    <>
+      <div className="space-y-6">
+        {/* Metric Name Input */}
+        <div className="space-y-2">
+          <Label htmlFor="metric-name" className="nexoya-label">
+            Calculated metric name
+          </Label>
+          <Input
+            id="metric-name"
+            placeholder="e.g., Net Revenue, Qualified Leads, Adjusted Conversions"
+            value={metricName}
+            onChange={(e) => onMetricNameChange(e.target.value)}
+            className="text-sm"
+          />
         </div>
 
-        {/* Operands List */}
-        <div
-          className={cn(
-            "min-h-[120px] rounded-lg border p-4",
-            operands.length === 0
-              ? "border-dashed border-border bg-muted/20"
-              : "border-border bg-background"
-          )}
-        >
-          {operands.length === 0 ? (
-            <div className="flex h-full min-h-[80px] flex-col items-center justify-center text-center">
-              <p className="text-sm text-muted-foreground">
-                No operands added yet
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Click "Add operand" to start building your calculation
+        {/* Build Your Calculation Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="nexoya-section-title">Build your calculation</h3>
+              <p className="nexoya-description mt-1">
+                Add operands and drag to reorder.
               </p>
             </div>
-          ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={operands.map((op) => op.id)}
-                strategy={verticalListSortingStrategy}
+            <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <Plus className="h-4 w-4" />
+                  Add operand
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[400px] p-4" align="end">
+                <OperandSelector
+                  metrics={availableMetrics}
+                  constants={localConstants}
+                  onSelectMetric={handleSelectMetric}
+                  onSelectConstant={handleSelectConstant}
+                  onSelectCustomConversion={handleSelectCustomConversion}
+                  onSelectUTM={handleSelectUTM}
+                  onSelectCustomImport={handleSelectCustomImport}
+                  onSelectCustomKPI={handleSelectCustomKPI}
+                  onCreateCustomConversion={() => setConversionModalOpen(true)}
+                  onCreateUTM={() => setUtmModalOpen(true)}
+                  onCreateCustomImport={() => setImportModalOpen(true)}
+                  onCreateCustomKPI={() => setKpiModalOpen(true)}
+                  onManageConstants={() => setConstantsModalOpen(true)}
+                  onClose={() => setPopoverOpen(false)}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Operands List */}
+          <div
+            className={cn(
+              "min-h-[120px] rounded-lg border p-4",
+              operands.length === 0
+                ? "border-dashed border-border bg-muted/20"
+                : "border-border bg-background"
+            )}
+          >
+            {operands.length === 0 ? (
+              <div className="flex h-full min-h-[80px] flex-col items-center justify-center text-center">
+                <p className="text-sm text-muted-foreground">
+                  No operands added yet
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Click "Add operand" to start building your calculation
+                </p>
+              </div>
+            ) : (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
               >
-                <div className="space-y-2">
-                  {operands.map((operand, index) => (
-                    <DraggableOperand
-                      key={operand.id}
-                      operand={operand}
-                      index={index}
-                      onOperatorChange={(operator) =>
-                        onUpdateOperator(operand.id, operator)
-                      }
-                      onRemove={() => onRemoveOperand(operand.id)}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-          )}
+                <SortableContext
+                  items={operands.map((op) => op.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-2">
+                    {operands.map((operand, index) => (
+                      <DraggableOperand
+                        key={operand.id}
+                        operand={operand}
+                        index={index}
+                        onOperatorChange={(operator) =>
+                          onUpdateOperator(operand.id, operator)
+                        }
+                        onRemove={() => onRemoveOperand(operand.id)}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            )}
+          </div>
         </div>
+
+        {/* Formula Preview */}
+        <FormulaPreview operands={operands} />
       </div>
 
-      {/* Formula Preview */}
-      <FormulaPreview operands={operands} />
-    </div>
+      {/* Modals */}
+      <CustomConversionModal
+        open={conversionModalOpen}
+        onOpenChange={setConversionModalOpen}
+        onSave={handleSaveCustomConversion}
+      />
+      <UTMConfigModal
+        open={utmModalOpen}
+        onOpenChange={setUtmModalOpen}
+        onSave={handleSaveUTM}
+      />
+      <CustomImportModal
+        open={importModalOpen}
+        onOpenChange={setImportModalOpen}
+        onSave={handleSaveCustomImport}
+      />
+      <CustomKPIModal
+        open={kpiModalOpen}
+        onOpenChange={setKpiModalOpen}
+        onSave={handleSaveCustomKPI}
+      />
+      <ManageConstantsModal
+        open={constantsModalOpen}
+        onOpenChange={setConstantsModalOpen}
+        constants={localConstants}
+        onSave={setLocalConstants}
+        onAddConstant={handleAddConstant}
+      />
+    </>
   );
 }
