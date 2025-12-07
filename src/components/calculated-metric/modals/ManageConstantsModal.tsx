@@ -194,7 +194,7 @@ export function ManageConstantsModal({
                     <SelectContent>
                       <SelectItem value="%">%</SelectItem>
                       <SelectItem value="x">x (multiplier)</SelectItem>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
