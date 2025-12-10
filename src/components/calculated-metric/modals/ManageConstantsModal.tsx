@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,8 +19,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Constant } from '@/types/calculated-metric';
-
-const LOCATIONS = ['Global', 'Germany', 'Switzerland', 'Austria', 'France', 'UK', 'USA'];
 
 interface ManageConstantsModalProps {
   open: boolean;
@@ -43,7 +41,6 @@ export function ManageConstantsModal({
     value: '',
     unit: '%',
     timeSeries: false,
-    location: 'Global',
     periods: 1,
   });
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
@@ -60,9 +57,8 @@ export function ManageConstantsModal({
       id: `const-${Date.now()}`,
       name: newConstant.name,
       value: parseFloat(newConstant.value),
-      unit: newConstant.unit,
+      unit: newConstant.unit === 'none' ? '' : newConstant.unit,
       timeSeries: newConstant.timeSeries,
-      location: newConstant.location !== 'Global' ? newConstant.location : undefined,
       periods: newConstant.timeSeries ? newConstant.periods : undefined,
     };
 
@@ -76,7 +72,6 @@ export function ManageConstantsModal({
       value: '',
       unit: '%',
       timeSeries: false,
-      location: 'Global',
       periods: 1,
     });
     setIsAddingNew(false);
@@ -114,16 +109,9 @@ export function ManageConstantsModal({
                     className="flex items-center justify-between rounded-lg border border-border p-3"
                   >
                     <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-foreground">
-                          {constant.name}
-                        </span>
-                        {constant.location && (
-                          <span className="text-xs text-muted-foreground">
-                            ({constant.location})
-                          </span>
-                        )}
-                      </div>
+                      <span className="text-sm font-medium text-foreground">
+                        {constant.name}
+                      </span>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         {constant.timeSeries ? (
                           <span>
@@ -143,28 +131,26 @@ export function ManageConstantsModal({
           {/* Add New Section */}
           {isAddingNew ? (
             <div className="rounded-lg border border-border p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground">New constant</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={resetNewConstant}
-                >
-                  Cancel
-                </Button>
+              <span className="text-sm font-medium text-foreground">New constant</span>
+
+              {/* Name - Full width */}
+              <div className="space-y-2">
+                <Label className="nexoya-label">Name</Label>
+                <Input
+                  placeholder="e.g., VAT Rate {country} or Margin factor"
+                  value={newConstant.name}
+                  onChange={(e) =>
+                    setNewConstant({ ...newConstant, name: e.target.value })
+                  }
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Use {'{variable}'} syntax to add location or other variables, e.g., "VAT Rate {'{country}'}"
+                </p>
               </div>
 
+              {/* Value and Unit - Side by side */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="nexoya-label">Name</Label>
-                  <Input
-                    placeholder="e.g., VAT Rate"
-                    value={newConstant.name}
-                    onChange={(e) =>
-                      setNewConstant({ ...newConstant, name: e.target.value })
-                    }
-                  />
-                </div>
                 <div className="space-y-2">
                   <Label className="nexoya-label">Value</Label>
                   <Input
@@ -177,9 +163,6 @@ export function ManageConstantsModal({
                     }
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="nexoya-label">Unit</Label>
                   <Select
@@ -195,26 +178,6 @@ export function ManageConstantsModal({
                       <SelectItem value="%">%</SelectItem>
                       <SelectItem value="x">x (multiplier)</SelectItem>
                       <SelectItem value="none">None</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="nexoya-label">Location</Label>
-                  <Select
-                    value={newConstant.location}
-                    onValueChange={(value) =>
-                      setNewConstant({ ...newConstant, location: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {LOCATIONS.map((loc) => (
-                        <SelectItem key={loc} value={loc}>
-                          {loc}
-                        </SelectItem>
-                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -258,9 +221,14 @@ export function ManageConstantsModal({
                 </p>
               )}
 
-              <Button onClick={handleAddConstant} className="w-full">
-                Add constant
-              </Button>
+              <div className="flex items-center gap-3 pt-2">
+                <Button onClick={handleAddConstant} className="flex-1">
+                  Add constant
+                </Button>
+                <Button variant="ghost" onClick={resetNewConstant}>
+                  Cancel
+                </Button>
+              </div>
             </div>
           ) : (
             <button
@@ -272,11 +240,6 @@ export function ManageConstantsModal({
               Add new constant
             </button>
           )}
-
-          {/* Tip */}
-          <p className="text-xs text-muted-foreground">
-            Tip: Use location-specific constants for country-based calculations like VAT rates.
-          </p>
         </div>
 
         <DialogFooter>

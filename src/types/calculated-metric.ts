@@ -1,6 +1,6 @@
 export type OperatorType = 'add' | 'subtract' | 'multiply';
 
-export type OperandType = 'metric' | 'constant' | 'custom-conversion' | 'utm' | 'custom-import' | 'custom-kpi';
+export type OperandType = 'metric' | 'constant' | 'custom-conversion' | 'utm' | 'custom-import' | 'custom-kpi' | 'group';
 
 export interface Operand {
   id: string;
@@ -9,6 +9,14 @@ export interface Operand {
   value?: string | number;
   source?: string;
   operator?: OperatorType;
+  // For grouped operands
+  children?: Operand[];
+  isSelected?: boolean;
+}
+
+export interface OperandGroup {
+  id: string;
+  operands: Operand[];
 }
 
 export interface Metric {

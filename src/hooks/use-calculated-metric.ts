@@ -4,7 +4,6 @@ import { arrayMove } from '@dnd-kit/sortable';
 
 export function useCalculatedMetric() {
   const [operands, setOperands] = useState<Operand[]>([]);
-  const [metricName, setMetricName] = useState('');
 
   const addOperand = useCallback((operand: Omit<Operand, 'id'>) => {
     const newOperand: Operand = {
@@ -56,18 +55,16 @@ export function useCalculatedMetric() {
   }, [operands]);
 
   const isValid = useCallback(() => {
-    return operands.length >= 2 && metricName.trim().length > 0;
-  }, [operands, metricName]);
+    return operands.length >= 2;
+  }, [operands]);
 
   const reset = useCallback(() => {
     setOperands([]);
-    setMetricName('');
   }, []);
 
   return {
     operands,
-    metricName,
-    setMetricName,
+    setOperands,
     addOperand,
     updateOperand,
     removeOperand,
