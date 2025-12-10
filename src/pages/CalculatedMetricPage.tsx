@@ -18,12 +18,12 @@ export default function CalculatedMetricPage() {
 
   const {
     operands,
-    metricName,
-    setMetricName,
+    setOperands,
     addOperand,
     updateOperator,
     removeOperand,
     reorderOperands,
+    getFormulaPreview,
     isValid,
     reset,
   } = useCalculatedMetric();
@@ -34,11 +34,14 @@ export default function CalculatedMetricPage() {
     if (mappingType === 'calculated-metric' && !isValid()) {
       toast({
         title: 'Incomplete configuration',
-        description: 'Please add at least 2 operands and name your metric.',
+        description: 'Please add at least 2 operands to your calculation.',
         variant: 'destructive',
       });
       return;
     }
+
+    // Generate label from formula
+    const formulaLabel = getFormulaPreview();
 
     // Update funnel step with calculated metric
     if (mappingType === 'calculated-metric') {
@@ -49,7 +52,7 @@ export default function CalculatedMetricPage() {
                 ...step,
                 isAssigned: true,
                 assignmentType: 'Calculated metric',
-                value: metricName,
+                value: formulaLabel,
               }
             : step
         )
@@ -112,10 +115,10 @@ export default function CalculatedMetricPage() {
             <div className="p-6">
               <div className="mb-6">
                 <h2 className="text-lg font-medium text-foreground">
-                  Mapping type for {selectedStep?.name}
+                  Configure {selectedStep?.name}
                 </h2>
                 <p className="nexoya-description mt-1">
-                  Assign metrics to funnel steps to track the performance of your marketing campaigns.
+                  Select a mapping type and configure the metric assignment.
                 </p>
               </div>
 
@@ -129,14 +132,13 @@ export default function CalculatedMetricPage() {
                   <Separator className="my-6" />
                   <CalculationBuilder
                     operands={operands}
-                    metricName={metricName}
                     availableMetrics={AVAILABLE_METRICS}
                     availableConstants={AVAILABLE_CONSTANTS}
-                    onMetricNameChange={setMetricName}
                     onAddOperand={addOperand}
                     onUpdateOperator={updateOperator}
                     onRemoveOperand={removeOperand}
                     onReorderOperands={reorderOperands}
+                    onSetOperands={setOperands}
                   />
                 </>
               )}
